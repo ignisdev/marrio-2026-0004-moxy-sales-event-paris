@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #0f0f0f;
+  --card: #1a1a1a;
+  --muted: #a3a3a3;
+  --accent: #ff3d7f;
+  --border: #2a2a2a;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  /* Brand display face (loaded via next/font in the guest layout). Falls back to
+     the sans stack anywhere the variable is not present (e.g. admin).
+     The Knockout face lacks the Œ/œ ligature, the typographic apostrophe ’ and
+     the ellipsis …, so those codepoints are served from Gill Sans via the
+     scoped @font-face below — keeping French copy legible instead of tofu. */
+  --font-title: "knockout-oe-fallback", var(--font-knockout), Arial, Helvetica, sans-serif;
+  /* Body copy: GillSans Light by default; SemiBold for emphasised paragraphs. */
+  --font-body: var(--font-gillsans), Arial, Helvetica, sans-serif;
+  --font-body-semibold: var(--font-gillsans-semibold), Arial, Helvetica, sans-serif;
+  /* Normal (non-light) weight: only Light + SemiBold are loaded as web fonts,
+     so use the system Gill Sans (present on iOS/macOS) for a true regular
+     weight, falling back to the light face then Arial elsewhere. */
+  --font-body-normal: "Gill Sans", "Gill Sans MT", var(--font-gillsans), Arial, Helvetica, sans-serif;
+}
+
+/* Per-glyph fallback for the few characters the Knockout display face lacks but
+   the French copy uses: the Œ/œ ligature (U+0152–0153), the typographic
+   apostrophe ’ (U+2019, e.g. "S’inscrire", "l’appareil") and the ellipsis …
+   (U+2026). Scoped to just those codepoints so every other glyph still resolves
+   to Knockout. Gill Sans (already a brand body face) carries all of them. */
+@font-face {
+  font-family: "knockout-oe-fallback";
+  src: url("/fonts/GillSans-Light.ttf") format("truetype");
+  unicode-range: U+0152-0153, U+2019, U+2026;
+  font-display: swap;
+}
+
+/* The document (window) is the single scroll context for the whole app. iOS
+   Safari only retracts/translucent-izes its top + bottom toolbars when the root
+   document scrolls — an inner overflow-scroll container locks the toolbars in
+   their tall, opaque state and prevents any background from bleeding behind
+   them. So no element below should own the scroll. */
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+}
+
+/* "Pixel reveal": text/logo resolves from a coarse, de-res'd blur to sharp on
+   mount (page load) and whenever the heading remounts (section transitions).
+   Uses blur + contrast (well supported on iOS Safari and all mobile browsers)
+   with stepped timing for a chunky "snapping into focus" feel. The SVG-mosaic
+   approach was dropped because Safari renders feTile/feMorphology unreliably.
+   Tweak --pixel-reveal-duration. */
+:root {
+  --pixel-reveal-duration: 0.8s;
+}
+
+/* JS-driven pixel-reveal via class toggle. The HeadingBox component starts each
+   row span with "pixel-blur" applied, then removes it after a double rAF + a
+   per-row setTimeout delay. The CSS transition below fires on that class removal,
+   animating from blurry colour-masses to sharp in 4 chunky steps.
+
+   Why transitions instead of @keyframes animations:
+   CSS animations with animation-delay + animation-fill-mode: forwards don't
+   reliably override a static opacity:0 on the same element in Safari — the
+   element stays stuck in the blurred/invisible state after the animation ends.
+   CSS transitions have no fill-mode concept: when the class is removed the
+   element simply adopts its natural CSS (no filter, opacity 1) after the
+   transition, which Safari handles correctly. */
+
+.pixel-reveal-t {
+  transition:
+    filter var(--pixel-reveal-duration, 0.8s) steps(4, jump-none),
+    opacity var(--pixel-reveal-duration, 0.8s) steps(4, jump-none);
+}
+
+/* Initial blurry state. Removed by JS to trigger the transition above.
+   High blur + contrast collapses edges into hard-edged colour masses — the
+   closest CSS can achieve to "large square pixels" for HTML text content. */
+.pixel-blur {
+  filter: blur(20px) contrast(15) saturate(2);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-reveal-t {
+    transition: none;
+  }
+  /* Immediately clear the blur so elements aren't stuck invisible when
+     the JS removes the class with no transition. */
+  .pixel-blur {
+    filter: none;
+    opacity: 1;
+  }
+}
+
+/* Titles use the Knockout display face across the guest experience, at the
+   font's natural (normal) weight — no faux bold. */
+h1 {
+  font-family: var(--font-title);
+  /* Override per-element font-bold/black utilities so Knockout renders at its
+     natural weight (no faux bold). */
+  font-weight: normal !important;
+}
+
+/* Premium page + element reveal. The page cross-fades softly; its key elements
+   then fade up in sequence for a refined, unhurried fine-art feel. Replayed on
+   every client navigation via template.tsx. */
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-fade 500ms ease both;
+}
+
+.fade-up {
+  animation: fade-up 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Apply to a container; its direct children fade up one after another. */
+.stagger > * {
+  opacity: 0;
+  animation: fade-up 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 80ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 180ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 280ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 380ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 480ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 580ms;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 680ms;
+}
+.stagger > *:nth-child(8) {
+  animation-delay: 780ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition,
+  .stagger > * {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Shared-element morph (gallery thumbnail → scan reveal) and root cross-fade. */
+::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+  animation-timing-function: ease;
+}
