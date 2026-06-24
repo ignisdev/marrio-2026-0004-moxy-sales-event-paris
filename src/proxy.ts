@@ -10,6 +10,19 @@ import { NextResponse, type NextRequest } from "next/server";
 //
 // Next 16 renamed the `middleware` file convention to `proxy`; this is that file.
 export function proxy(request: NextRequest) {
+  // Because this proxy matches /admin/:path* and returns NextResponse.next(),
+  // it suppresses Next's built-in trailing-slash normalization. Without that,
+  // `/admin/` reaches Payload's catch-all ([[...segments]]) as segments:[""]
+  // instead of [] — which Payload treats as an unknown route and bounces to
+  // login, producing a post-login redirect loop (login -> /admin/ -> login).
+  // Restore the normalization ourselves before continuing.
+  const { pathname } = request.nextUrl;
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/\/+$/, "");
+    return NextResponse.redirect(url, 308);
+  }
+
   const headers = new Headers(request.headers);
   headers.delete("sec-fetch-site");
   headers.delete("sec-fetch-mode");
