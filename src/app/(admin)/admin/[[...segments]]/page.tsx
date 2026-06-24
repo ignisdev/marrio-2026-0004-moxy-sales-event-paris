@@ -8,8 +8,12 @@ type Args = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// A trailing slash on /admin (or a /admin/ redirect target) makes Next match the
+// catch-all with segments:[""] rather than []. Payload renders [""] as an unknown
+// route and bounces to login, producing a post-login redirect loop. Dropping empty
+// segments collapses /admin/ back to the dashboard index.
 const normalizeParams = (params: Args["params"]): Promise<{ segments: string[] }> =>
-  params.then(({ segments }) => ({ segments: segments ?? [] }));
+  params.then(({ segments }) => ({ segments: (segments ?? []).filter(Boolean) }));
 
 const normalizeSearchParams = (
   searchParams: Args["searchParams"],
