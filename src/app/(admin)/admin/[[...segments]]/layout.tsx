@@ -16,19 +16,12 @@ async function serverFunction(args: ServerFunctionClientArgs) {
   });
 }
 
-export default async function AdminLayout({
-  children,
-  params,
-}: {
-  children: ReactNode;
-  params: Promise<{ segments: string[] }>;
-}) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RootLayout
       config={configPromise}
       importMap={importMap}
       serverFunction={serverFunction}
-      params={params}
     >
       {children}
     </RootLayout>

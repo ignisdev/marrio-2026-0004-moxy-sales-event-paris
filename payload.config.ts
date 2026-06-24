@@ -17,6 +17,13 @@ import { SiteCopy } from "./src/globals/SiteCopy.ts";
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
+// Supabase (and most hosted Postgres) require SSL, but a bare connection
+// string won't enable it in node-postgres. Turn SSL on for any non-local host.
+const dbConnectionString = process.env.DATABASE_URI ?? "";
+const isLocalDb =
+  dbConnectionString.includes("localhost") ||
+  dbConnectionString.includes("127.0.0.1");
+
 const s3Enabled = Boolean(
   process.env.AWS_S3_BUCKET &&
     process.env.AWS_ACCESS_KEY_ID &&
@@ -46,7 +53,8 @@ export default buildConfig({
   globals: [SiteCopy],
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI,
+      connectionString: dbConnectionString,
+      ssl: isLocalDb ? undefined : { rejectUnauthorized: false },
     },
   }),
   localization: {

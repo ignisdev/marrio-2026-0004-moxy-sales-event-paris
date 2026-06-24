@@ -47,4 +47,5 @@ next-env.d.ts
 *.pdf
 *.docx
 /docs
-docker-compose.yml
+/WebApp
+docker-compose.yml1
