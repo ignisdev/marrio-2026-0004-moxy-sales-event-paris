@@ -21,12 +21,12 @@
   --color-border: var(--border);
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  /* Brand display face (loaded via next/font in the guest layout). Falls back to
-     the sans stack anywhere the variable is not present (e.g. admin).
-     The Knockout face lacks the Œ/œ ligature, the typographic apostrophe ’ and
-     the ellipsis …, so those codepoints are served from Gill Sans via the
-     scoped @font-face below — keeping French copy legible instead of tofu. */
-  --font-title: "knockout-oe-fallback", var(--font-knockout), Arial, Helvetica, sans-serif;
+  /* Brand display face (loaded via the @font-face below). Falls back to the sans
+     stack anywhere the face fails to load (e.g. admin). The woff/woff2 build
+     carries the full character set — including the Œ/œ ligature, the typographic
+     apostrophe ’ and the ellipsis … used in French copy — so no per-glyph
+     fallback is needed. */
+  --font-title: "Knockout HTF49", Arial, Helvetica, sans-serif;
   /* Body copy: GillSans Light by default; SemiBold for emphasised paragraphs. */
   --font-body: var(--font-gillsans), Arial, Helvetica, sans-serif;
   --font-body-semibold: var(--font-gillsans-semibold), Arial, Helvetica, sans-serif;
@@ -36,15 +36,16 @@
   --font-body-normal: "Gill Sans", "Gill Sans MT", var(--font-gillsans), Arial, Helvetica, sans-serif;
 }
 
-/* Per-glyph fallback for the few characters the Knockout display face lacks but
-   the French copy uses: the Œ/œ ligature (U+0152–0153), the typographic
-   apostrophe ’ (U+2019, e.g. "S’inscrire", "l’appareil") and the ellipsis …
-   (U+2026). Scoped to just those codepoints so every other glyph still resolves
-   to Knockout. Gill Sans (already a brand body face) carries all of them. */
+/* Brand display face. The woff2/woff build carries the full character set, so a
+   single face covers French copy (Œ/œ, the typographic apostrophe ’, ellipsis …)
+   with no per-glyph fallback. woff2 is preferred; woff is the legacy fallback. */
 @font-face {
-  font-family: "knockout-oe-fallback";
-  src: url("/fonts/GillSans-Light.ttf") format("truetype");
-  unicode-range: U+0152-0153, U+2019, U+2026;
+  font-family: "Knockout HTF49";
+  src:
+    url("/fonts/Knockout-HTF49-Liteweight.woff2") format("woff2"),
+    url("/fonts/Knockout-HTF49-Liteweight.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
   font-display: swap;
 }
 

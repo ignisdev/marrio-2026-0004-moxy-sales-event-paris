@@ -5,7 +5,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
 
   return (
     <a
-      className="rounded-md border border-[var(--border)] px-3 py-2 text-xs font-semibold uppercase text-[var(--muted)]"
+      className="border-[0.5px] border-black px-3 py-2 text-xs font-semibold uppercase text-white font-[family-name:var(--font-title)]"
       href={`/${otherLocale}/start`}
     >
       {otherLocale}

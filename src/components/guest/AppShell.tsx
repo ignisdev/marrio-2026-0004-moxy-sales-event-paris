@@ -4,7 +4,6 @@ import { twMerge } from "tailwind-merge";
 
 import type { Locale } from "@/config/locales";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { UserPageLink } from "./UserPageLink";
 
 export function AppShell({
   children,
@@ -50,9 +49,8 @@ export function AppShell({
             />
           </div>
         )}
-        <header className="relative z-[1] mb-4 flex items-center justify-between">
+        <header className="relative z-[1] mb-4 flex items-center justify-end">
           <LanguageSwitcher locale={locale} />
-          <UserPageLink locale={locale} />
         </header>
         <div className="flex flex-1 flex-col">{children}</div>
       </div>

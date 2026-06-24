@@ -2,13 +2,8 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "../globals.css";
 
-// Brand display typeface for titles and buttons. Exposed as a CSS variable so
-// globals.css / Tailwind's `font-title` token can reference it.
-const knockout = localFont({
-  src: "../../../public/fonts/Knockout-HTF49-Liteweight.otf",
-  variable: "--font-knockout",
-  display: "swap",
-});
+// Brand display typeface (Knockout) is loaded via @font-face in globals.css from
+// the woff2/woff build, which carries the full character set.
 
 // Body copy faces. GillSans Light is the default paragraph font; SemiBold is
 // used for emphasised intro paragraphs.
@@ -50,8 +45,8 @@ export default function GuestRootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${knockout.variable} ${gillSans.variable} ${gillSansSemibold.variable} h-full antialiased`}
+      lang="fr"
+      className={`${gillSans.variable} ${gillSansSemibold.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

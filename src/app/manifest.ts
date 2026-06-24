@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Moxy Gallery Quest",
     short_name: "Gallery Quest",
     description: "Mobile-first QR-led gallery activation for Moxy events.",
-    start_url: "/en/start",
+    start_url: "/fr/start",
     display: "standalone",
     orientation: "portrait",
     icons: [
