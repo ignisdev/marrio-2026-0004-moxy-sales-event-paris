@@ -17,9 +17,15 @@ import { SiteCopy } from "./src/globals/SiteCopy.ts";
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-// Supabase (and most hosted Postgres) require SSL, but a bare connection
-// string won't enable it in node-postgres. Turn SSL on for any non-local host.
-const dbConnectionString = process.env.DATABASE_URI ?? "";
+// Prefer our own DATABASE_URI, but fall back to the connection strings the
+// Vercel Neon integration injects automatically (POSTGRES_URL / DATABASE_URL).
+// Neon (and most hosted Postgres) require SSL, but a bare connection string
+// won't enable it in node-postgres, so turn SSL on for any non-local host.
+const dbConnectionString =
+  process.env.DATABASE_URI ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL ??
+  "";
 const isLocalDb =
   dbConnectionString.includes("localhost") ||
   dbConnectionString.includes("127.0.0.1");
