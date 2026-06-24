@@ -23,6 +23,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  // Only strip the Sec-Fetch-* hints for full-page (document) navigations —
+  // that's the case where the authenticated admin catch-all 404s. RSC/data
+  // navigations carry the `RSC` header; stripping their Sec-Fetch hints makes
+  // Payload's auth check misfire and bounce an authenticated user back to
+  // login, which is what turned the original 404 into a post-login redirect
+  // loop. Leave RSC requests untouched.
+  if (request.headers.get("rsc")) {
+    return NextResponse.next();
+  }
+
   const headers = new Headers(request.headers);
   headers.delete("sec-fetch-site");
   headers.delete("sec-fetch-mode");
