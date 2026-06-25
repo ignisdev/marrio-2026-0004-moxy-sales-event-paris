@@ -19,7 +19,6 @@ import {
   subscribeCollectedArtworkSlugs,
 } from "@/config/storage";
 import type { GalleryArtwork } from "@/lib/galleryData";
-import { placeholderImage } from "@/lib/media";
 import type { GalleryProgress } from "@/types/domain";
 
 /**
@@ -137,9 +136,9 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
     );
   }
 
-  // One framed artwork. Collected → the revealed image fills the frame window;
-  // locked → the no_image placeholder sits centred in an empty frame (no
-  // grey-out, no status label, no title).
+  // One framed artwork. Found → the revealed image fills the frame and the frame
+  // links through to the scan/reveal video. Not yet found → an empty frame, inert.
+  // No grey-out, label, or title.
   function renderFrame(index: number) {
     const artwork = artworks[index];
     const frame = FRAMES[index];
@@ -153,23 +152,13 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
     const framed = (
       <div className="relative w-full" style={{ aspectRatio: String(frame.ar) }}>
         <div className="absolute overflow-hidden" style={{ inset: frame.pad }}>
-          {isCollected ? (
+          {isCollected && artwork.revealedImageUrl ? (
             <FadeImage
               alt={artwork.title}
               className="h-full w-full object-cover"
-              src={artwork.revealedImageUrl || placeholderImage}
+              src={artwork.revealedImageUrl}
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt=""
-                aria-hidden
-                className="w-1/2 object-contain"
-                src="/images/no_image.png"
-              />
-            </div>
-          )}
+          ) : null}
         </div>
         {/* Ornate frame overlay — its centre is transparent. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}

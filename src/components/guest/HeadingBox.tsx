@@ -13,12 +13,38 @@ import { twMerge } from "tailwind-merge";
  * This avoids animation fill-mode bugs on Safari (delayed CSS animations with
  * fill:forwards don't reliably override a static opacity:0 on the same element).
  */
+const HIGHLIGHT_COLOR = "#8c0980";
+
+/**
+ * Splits the trailing character or word of a string out into a coloured span,
+ * leaving the rest untouched. Used to accent the final heading row.
+ */
+function highlightTail(text: string, unit: "char" | "word"): ReactNode {
+  const match = unit === "char" ? text.match(/(\S)\s*$/) : text.match(/(\S+)\s*$/);
+  if (!match) return text;
+
+  const tail = match[1];
+  const head = text.slice(0, text.length - match[0].length);
+  const trailing = match[0].slice(tail.length);
+
+  return (
+    <>
+      {head}
+      <span style={{ color: HIGHLIGHT_COLOR }}>{tail}</span>
+      {trailing}
+    </>
+  );
+}
+
 export function HeadingBox({
   rows,
   className,
+  highlightLast,
 }: {
   rows: ReactNode[];
   className?: string;
+  /** Accent the last char or word of the final row in the Moxy magenta. */
+  highlightLast?: "char" | "word";
 }) {
   const rowRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
@@ -53,21 +79,29 @@ export function HeadingBox({
         className,
       )}
     >
-      {rows.map((row, index) => (
-        <div
-          className="flex h-[7.47dvh] items-center justify-center px-2"
-          key={index}
-        >
-          <span
-            ref={(el) => {
-              rowRefs.current[index] = el;
-            }}
-            className="pixel-blur pixel-reveal-t inline-block"
+      {rows.map((row, index) => {
+        const isLast = index === rows.length - 1;
+        const content =
+          isLast && highlightLast && typeof row === "string"
+            ? highlightTail(row, highlightLast)
+            : row;
+
+        return (
+          <div
+            className="flex h-[7.47dvh] items-center justify-center px-2"
+            key={index}
           >
-            {row}
-          </span>
-        </div>
-      ))}
+            <span
+              ref={(el) => {
+                rowRefs.current[index] = el;
+              }}
+              className="pixel-blur pixel-reveal-t inline-block"
+            >
+              {content}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

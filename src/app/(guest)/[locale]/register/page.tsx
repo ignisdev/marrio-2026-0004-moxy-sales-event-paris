@@ -28,7 +28,7 @@ export default async function RegisterPage({ params }: { params: Promise<{ local
       <div className="relative flex flex-1 flex-col text-center">
         <div className="relative z-10 pt-[10.58dvh]">
           <div className="mx-auto w-[79.46%]">
-            <HeadingBox rows={toLines(copy.headingRegister)} />
+            <HeadingBox rows={toLines(copy.headingRegister)} highlightLast="word" />
           </div>
         </div>
         <div className="absolute z-0 -bottom-5 -left-5 -right-5 h-[63.28dvh] bg-black px-5 pt-[clamp(3rem,9.54dvh,92px)] pb-[clamp(1.5rem,4.77dvh,46px)] flex flex-col items-center overflow-y-auto">

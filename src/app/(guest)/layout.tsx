@@ -32,6 +32,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Moxy Gallery Quest",
   description: "Mobile-first QR-led gallery activation for Moxy events.",
+  icons: {
+    icon: "/images/favicon.ico",
+    shortcut: "/images/favicon.ico",
+    apple: "/images/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
