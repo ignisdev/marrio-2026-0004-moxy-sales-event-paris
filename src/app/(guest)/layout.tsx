@@ -29,13 +29,38 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  // Absolute base so og/twitter image URLs resolve for external scrapers.
+  metadataBase: new URL(appUrl),
   title: "Moxy Gallery Quest",
   description: "Mobile-first QR-led gallery activation for Moxy events.",
   icons: {
     icon: "/images/favicon.ico",
     shortcut: "/images/favicon.ico",
     apple: "/images/favicon.ico",
+  },
+  openGraph: {
+    title: "Moxy Gallery Quest",
+    description: "Mobile-first QR-led gallery activation for Moxy events.",
+    url: "/",
+    siteName: "Moxy Gallery Quest",
+    images: [
+      {
+        url: "/images/og_image.png",
+        width: 1200,
+        height: 630,
+        alt: "Moxy Hotels — The Art Hunter",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Moxy Gallery Quest",
+    description: "Mobile-first QR-led gallery activation for Moxy events.",
+    images: ["/images/og_image.png"],
   },
   appleWebApp: {
     capable: true,
