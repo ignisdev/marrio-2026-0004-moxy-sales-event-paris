@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     apple: "/images/favicon.ico",
   },
   openGraph: {
-    title: "Moxy Hotel - The Art Hunter",
+    title: "Moxy Hotels - The Art Hunter",
     description: "HUNT DOWN ALL 5 ARTWORKS?",
     url: "/",
     siteName: "Moxy Hotels - The Art Hunter",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moxy Hotel - The Art Hunter",
+    title: "Moxy Hotels - The Art Hunter",
     description: "Mobile-first QR-led gallery activation for Moxy events.",
     images: ["/images/og_image.png"],
   },
