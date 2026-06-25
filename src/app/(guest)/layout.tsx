@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Moxy Hotels - The Art Hunter",
-    description: "HUNT DOWN ALL 5 ARTWORKS?",
+    description: "CAN YOU HUNT DOWN ALL 5 ARTWORKS?",
     url: "/",
     siteName: "Moxy Hotels - The Art Hunter",
     images: [
