@@ -74,6 +74,12 @@ export default buildConfig({
   plugins: [
     s3Storage({
       bucket: process.env.AWS_S3_BUCKET || "moxy-gallery-quest",
+      // Upload straight from the browser to S3 via a presigned URL instead of
+      // streaming the file through the Next.js route. Vercel caps serverless
+      // function request bodies at ~4.5MB, so without this large videos fail
+      // with FUNCTION_PAYLOAD_TOO_LARGE. Requires the bucket's CORS policy to
+      // allow PUT from the admin origin.
+      clientUploads: true,
       collections: {
         media: {
           disablePayloadAccessControl: true,

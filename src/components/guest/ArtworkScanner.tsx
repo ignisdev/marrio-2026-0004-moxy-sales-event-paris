@@ -1,6 +1,7 @@
 "use client";
 
-import { BrowserQRCodeReader, type IScannerControls } from "@zxing/browser";
+import { BrowserQRCodeReader } from "@zxing/browser";
+import { DecodeHintType } from "@zxing/library";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -100,7 +101,15 @@ export function ArtworkScanner({
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const revealVideoRef = useRef<HTMLVideoElement>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
+  // Camera stream + decode loop driven manually (instead of ZXing's built-in
+  // video decoder) so we can retry each frame inverted — the printed Moxy QR
+  // codes are bright magenta on black, i.e. inverted relative to what the
+  // default binarizer (dark-on-light) expects.
+  const readerRef = useRef<BrowserQRCodeReader | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const handlingDecodeRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [isRecordingScan, setIsRecordingScan] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -135,8 +144,9 @@ export function ArtworkScanner({
 
   useEffect(() => {
     return () => {
-      void controlsRef.current?.stop();
+      stopScanning();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function getParticipantUid() {
@@ -321,25 +331,96 @@ export function ArtworkScanner({
     }
   }
 
+  function getReader() {
+    if (!readerRef.current) {
+      const hints = new Map();
+      // TRY_HARDER does a more exhaustive scan — worth it for the low-contrast
+      // magenta-on-black printed codes.
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      readerRef.current = new BrowserQRCodeReader(hints);
+    }
+    return readerRef.current;
+  }
+
   function handleDecodedValue(value: string) {
     const artwork = resolveArtworkFromScannedValue(artworks, value);
 
     if (!artwork) {
+      // Keep scanning — an unrelated/garbage decode shouldn't abort the loop.
       setError("Artwork not found.");
       return;
     }
 
-    controlsRef.current?.stop();
-    controlsRef.current = null;
-    setIsScanning(false);
+    // Guard against the interval firing again before React unwinds.
+    if (handlingDecodeRef.current) {
+      return;
+    }
+    handlingDecodeRef.current = true;
+
+    stopScanning();
     setMatchedArtwork(artwork);
     setError(null);
     collectAndReveal(artwork);
   }
 
+  /** Decode the current canvas, returning the text or null if nothing found. */
+  function decodeCanvas(canvas: HTMLCanvasElement) {
+    try {
+      return getReader().decodeFromCanvas(canvas).getText();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Grab one video frame and try to decode it both as captured and inverted.
+   * The inverted pass is what makes the bright-on-dark Moxy codes readable.
+   */
+  function scanFrame() {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || !video.videoWidth) {
+      return;
+    }
+
+    let canvas = scanCanvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      scanCanvasRef.current = canvas;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return;
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // First pass: the frame as-is (handles any normal dark-on-light codes).
+    let text = decodeCanvas(canvas);
+
+    // Second pass: invert the pixels so light-on-dark codes look conventional.
+    if (!text) {
+      const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = image.data;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+      }
+      ctx.putImageData(image, 0, 0);
+      text = decodeCanvas(canvas);
+    }
+
+    if (text) {
+      handleDecodedValue(text);
+    }
+  }
+
   async function startScanning() {
     setError(null);
     setMatchedArtwork(null);
+    handlingDecodeRef.current = false;
 
     // Unlock the reveal video for unmuted playback while we still hold the tap
     // gesture (must run synchronously before any await).
@@ -350,34 +431,52 @@ export function ArtworkScanner({
       return;
     }
 
-    if (!videoRef.current) {
+    const video = videoRef.current;
+    if (!video) {
       setError("Camera unavailable.");
       return;
     }
 
     try {
       setIsScanning(true);
-      const codeReader = new BrowserQRCodeReader();
-      controlsRef.current = await codeReader.decodeFromVideoDevice(
-        undefined,
-        videoRef.current,
-        (result) => {
-          const decodedText = result?.getText();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "environment" } },
+      });
+      streamRef.current = stream;
+      video.srcObject = stream;
+      video.setAttribute("playsinline", "true");
+      await video.play();
 
-          if (decodedText) {
-            void handleDecodedValue(decodedText);
-          }
-        },
-      );
+      // Poll frames a few times a second; each tick runs the dual (normal +
+      // inverted) decode above.
+      scanTimerRef.current = setInterval(scanFrame, 180);
     } catch {
       setIsScanning(false);
+      stopStream();
       setError(copy.scannerCameraDenied);
     }
   }
 
+  function stopStream() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    const video = videoRef.current;
+    if (video) {
+      try {
+        video.srcObject = null;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   function stopScanning() {
-    controlsRef.current?.stop();
-    controlsRef.current = null;
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+    stopStream();
     setIsScanning(false);
   }
 
@@ -426,16 +525,6 @@ export function ArtworkScanner({
           <span className="pointer-events-none absolute bottom-2 right-2 h-6 w-6 border-b-2 border-r-2 border-white" />
         </div>
       </div>
-
-      {matchedArtwork ? (
-        <div className="space-y-1 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-center">
-          <p className="text-sm font-semibold uppercase text-[var(--accent)]">
-            {copy.scannerUnlocked}
-          </p>
-          <h1 className="text-2xl font-bold">{matchedArtwork.title}</h1>
-          <p className="text-sm text-[var(--muted)]">{copy.scannerOpening}</p>
-        </div>
-      ) : null}
 
       {error ? (
         <p className="rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-sm text-red-100">
