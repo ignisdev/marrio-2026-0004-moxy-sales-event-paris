@@ -25,27 +25,34 @@ if (!email || !password) {
   process.exit(1);
 }
 
-const payload = await getPayload({ config });
+async function main() {
+  const payload = await getPayload({ config });
 
-const existing = await payload.find({
-  collection: "admin-users",
-  where: { email: { equals: email } },
-  limit: 1,
-});
+  const existing = await payload.find({
+    collection: "admin-users",
+    where: { email: { equals: email } },
+    limit: 1,
+  });
 
-if (existing.docs.length > 0) {
-  await payload.update({
-    collection: "admin-users",
-    id: existing.docs[0].id,
-    data: { password },
-  });
-  console.log(`Reset password for existing admin user: ${email}`);
-} else {
-  await payload.create({
-    collection: "admin-users",
-    data: { email, password },
-  });
-  console.log(`Created admin user: ${email}`);
+  if (existing.docs.length > 0) {
+    await payload.update({
+      collection: "admin-users",
+      id: existing.docs[0].id,
+      data: { password },
+    });
+    console.log(`Reset password for existing admin user: ${email}`);
+  } else {
+    await payload.create({
+      collection: "admin-users",
+      data: { email, password },
+    });
+    console.log(`Created admin user: ${email}`);
+  }
+
+  process.exit(0);
 }
 
-process.exit(0);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
