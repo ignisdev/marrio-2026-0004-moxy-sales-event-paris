@@ -28,6 +28,7 @@ export type ScannerArtwork = {
   qrDynamicDestination: string | null;
   qrDynamicSlug: string | null;
   qrDynamicUrl: string | null;
+  qrExternalUrls: string[];
   qrPayload: string;
   qrToken: string;
   revealedImageUrl: string;
@@ -70,9 +71,19 @@ function resolveArtworkFromScannedValue(artworks: ScannerArtwork[], value: strin
       ? normalizeQrUrl(candidate.qrDynamicUrl)
       : null;
 
+    // Printed external/short URLs (e.g. rebrand.ly links) can't be resolved by
+    // following the redirect offline, so match the scanned value against the
+    // aliases stored on the artwork — by full URL or by trailing slug.
+    const externalMatch = candidate.qrExternalUrls.some(
+      (url) =>
+        normalizeQrUrl(url) === normalizedScannedUrl ||
+        getDynamicQrSlug(url) === dynamicSlug,
+    );
+
     return (
       (candidate.qrDynamicSlug && candidate.qrDynamicSlug === dynamicSlug) ||
-      (normalizedDynamicUrl && normalizedDynamicUrl === normalizedScannedUrl)
+      (normalizedDynamicUrl && normalizedDynamicUrl === normalizedScannedUrl) ||
+      externalMatch
     );
   });
   const destinationPayload = dynamicSource?.qrDynamicDestination || dynamicSource?.qrPayload;

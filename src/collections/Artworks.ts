@@ -120,6 +120,15 @@ export const Artworks: CollectionConfig = {
       },
     },
     {
+      name: "qrExternalUrls",
+      type: "array",
+      fields: [{ name: "url", type: "text", required: true }],
+      admin: {
+        description:
+          "External/short URLs printed in this artwork's QR code (e.g. https://rebrand.ly/xxxxxxx). The in-app scanner can't follow these redirects offline, so paste the EXACT URL encoded in the printed QR here and it will be mapped to this artwork locally.",
+      },
+    },
+    {
       name: "qrCodePreview",
       type: "ui",
       admin: {

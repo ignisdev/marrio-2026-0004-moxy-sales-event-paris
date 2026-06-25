@@ -72,6 +72,9 @@ export default async function ScannerPage({
         qrDynamicDestination: artwork.qrDynamicDestination || null,
         qrDynamicSlug: artwork.qrDynamicSlug || null,
         qrDynamicUrl: artwork.qrDynamicUrl || null,
+        qrExternalUrls: (artwork.qrExternalUrls ?? [])
+          .map((entry) => entry.url)
+          .filter((url): url is string => Boolean(url)),
         qrToken: artwork.qrToken,
         posterUrl: resolveMediaUrl(artwork.posterImage),
         revealedImageUrl: resolveMediaUrlOrPlaceholder(artwork.revealedImage),

@@ -252,6 +252,15 @@ export interface Artwork {
    * Internal destination payload. Example: mgq:v1:moxy-paris-la-villette-2026:{qrToken}. Can be changed after printing.
    */
   qrDynamicDestination?: string | null;
+  /**
+   * External/short URLs printed in this artwork's QR code (e.g. https://rebrand.ly/xxxxxxx). The in-app scanner can't follow these redirects offline, so paste the EXACT URL encoded in the printed QR here and it will be mapped to this artwork locally.
+   */
+  qrExternalUrls?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -509,6 +518,12 @@ export interface ArtworksSelect<T extends boolean = true> {
   qrDynamicSlug?: T;
   qrDynamicUrl?: T;
   qrDynamicDestination?: T;
+  qrExternalUrls?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
