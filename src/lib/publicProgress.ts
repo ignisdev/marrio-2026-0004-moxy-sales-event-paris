@@ -85,7 +85,7 @@ export async function getPublicProgress(
   const collected = collectedSlugs.size;
 
   return {
-    eventTitle: event?.title ?? "Moxy Gallery Quest",
+    eventTitle: event?.title ?? "Moxy Hotels - The Art Hunter",
     uid: participant.uid,
     // This is the participant's own shareable card, so the name is shown here.
     displayName: participant.displayName ?? null,

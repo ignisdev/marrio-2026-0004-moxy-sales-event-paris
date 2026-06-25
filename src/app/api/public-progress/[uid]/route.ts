@@ -10,7 +10,7 @@ export async function GET(
     artworks: [],
     collected: 0,
     displayName: null,
-    eventTitle: "Moxy Gallery Quest",
+    eventTitle: "Moxy Hotels - The Art Hunter",
     isComplete: false,
     required: 5,
     uid,

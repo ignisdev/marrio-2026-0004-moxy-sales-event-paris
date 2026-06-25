@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
-  return {
-    name: "Moxy Gallery Quest",
-    short_name: "Gallery Quest",
-    description: "Mobile-first QR-led gallery activation for Moxy events.",
+  return { 
+    name: "Moxy Hotels - The Art Hunter",
+    short_name: "The Art Hunter",
+    description: "HUNT DOWN ALL 5 ARTWORKS?",
     start_url: "/fr/start",
     display: "standalone",
     orientation: "portrait",

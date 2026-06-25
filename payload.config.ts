@@ -21,11 +21,28 @@ const dirname = path.dirname(filename);
 // Vercel Neon integration injects automatically (POSTGRES_URL / DATABASE_URL).
 // Neon (and most hosted Postgres) require SSL, but a bare connection string
 // won't enable it in node-postgres, so turn SSL on for any non-local host.
-const dbConnectionString =
+const rawDbConnectionString =
   process.env.DATABASE_URI ??
   process.env.POSTGRES_URL ??
   process.env.DATABASE_URL ??
   "";
+
+// SSL is configured explicitly via the pool `ssl` option below, so strip the
+// sslmode/channel_binding query params that Neon adds. This avoids the
+// pg-connection-string deprecation warning about `sslmode=require` semantics
+// changing in a future pg major.
+function stripSslParams(connectionString: string): string {
+  try {
+    const url = new URL(connectionString);
+    url.searchParams.delete("sslmode");
+    url.searchParams.delete("channel_binding");
+    return url.toString();
+  } catch {
+    return connectionString;
+  }
+}
+
+const dbConnectionString = stripSslParams(rawDbConnectionString);
 const isLocalDb =
   dbConnectionString.includes("localhost") ||
   dbConnectionString.includes("127.0.0.1");

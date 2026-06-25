@@ -34,7 +34,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000
 export const metadata: Metadata = {
   // Absolute base so og/twitter image URLs resolve for external scrapers.
   metadataBase: new URL(appUrl),
-  title: "Moxy Gallery Quest",
+  title: "Moxy Hotels - The Art Hunter",
   description: "Mobile-first QR-led gallery activation for Moxy events.",
   icons: {
     icon: "/images/favicon.ico",
@@ -42,10 +42,10 @@ export const metadata: Metadata = {
     apple: "/images/favicon.ico",
   },
   openGraph: {
-    title: "Moxy Gallery Quest",
-    description: "Mobile-first QR-led gallery activation for Moxy events.",
+    title: "Moxy Hotel - The Art Hunter",
+    description: "HUNT DOWN ALL 5 ARTWORKS?",
     url: "/",
-    siteName: "Moxy Gallery Quest",
+    siteName: "Moxy Hotels - The Art Hunter",
     images: [
       {
         url: "/images/og_image.png",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moxy Gallery Quest",
+    title: "Moxy Hotel - The Art Hunter",
     description: "Mobile-first QR-led gallery activation for Moxy events.",
     images: ["/images/og_image.png"],
   },

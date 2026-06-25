@@ -1,4 +1,4 @@
-# Moxy Gallery Quest
+# Moxy Hotels - The Art Hunter
 
 Mobile-first QR-led gallery activation scaffold for the Moxy Paris La Villette event on 2 July 2026.
 
