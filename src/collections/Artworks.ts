@@ -33,8 +33,8 @@ export const Artworks: CollectionConfig = {
     { name: "completionMessage", type: "textarea", localized: true },
     { name: "lockedImage", type: "upload", relationTo: "media" },
     { name: "revealedImage", type: "upload", relationTo: "media" },
-    { name: "videoAsset", type: "upload", relationTo: "media" },
-    { name: "posterImage", type: "upload", relationTo: "media" },
+    { name: "videoAsset", type: "upload", relationTo: "media", localized: true },
+    { name: "posterImage", type: "upload", relationTo: "media", localized: true },
     { name: "isActive", type: "checkbox", defaultValue: true },
     { name: "isBonvoyBonus", type: "checkbox", defaultValue: false },
     {
