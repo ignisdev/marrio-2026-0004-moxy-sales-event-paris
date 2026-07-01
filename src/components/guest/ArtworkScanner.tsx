@@ -281,24 +281,35 @@ export function ArtworkScanner({
     if (artwork.posterUrl) {
       video.poster = artwork.posterUrl;
     }
-    video.muted = false;
-    video.currentTime = 0;
+    // Switch the element from the priming srcObject to the new src cleanly.
+    // Chrome on iOS needs an explicit load() here or it keeps stale state.
+    // Do NOT set currentTime yet: a fresh src starts at 0, and assigning
+    // currentTime before the media has loaded (readyState 0) throws on
+    // WebKit/Chrome-iOS — which would abort before play() ever runs.
+    video.load();
 
     setRevealAwaitingUnmute(false);
-    const played = video.play();
-    if (played) {
-      void played.then(() => setRevealNeedsTap(false)).catch(() => {
-        // Unmuted blocked (e.g. activation lost) — fall back to muted autoplay
-        // so the video keeps playing, and arm tap-anywhere to turn sound on.
-        video.muted = true;
-        void video
-          .play()
-          .then(() => {
-            setRevealNeedsTap(false);
-            setRevealAwaitingUnmute(true);
-          })
-          .catch(() => setRevealNeedsTap(true));
-      });
+
+    // Prefer unmuted. If the browser blocks it (activation lost by the time the
+    // async QR decode fires) — or play() throws synchronously — fall back to
+    // muted autoplay, which is always permitted, so the video still plays.
+    const playMutedFallback = () => {
+      video.muted = true;
+      Promise.resolve(video.play())
+        .then(() => {
+          setRevealNeedsTap(false);
+          setRevealAwaitingUnmute(true);
+        })
+        .catch(() => setRevealNeedsTap(true));
+    };
+
+    try {
+      video.muted = false;
+      Promise.resolve(video.play())
+        .then(() => setRevealNeedsTap(false))
+        .catch(playMutedFallback);
+    } catch {
+      playMutedFallback();
     }
   }
 
