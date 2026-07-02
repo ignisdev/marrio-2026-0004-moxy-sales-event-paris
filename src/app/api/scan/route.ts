@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import configPromise from "@payload-config";
 import { getPayload } from "payload";
+import { track } from "@vercel/analytics/server";
 
 import { calculateProgress } from "@/lib/progress";
 import { parseArtworkQrPayload } from "@/lib/qr";
@@ -130,6 +131,47 @@ export async function POST(request: Request) {
     required: event.totalRequiredArtworks,
     uid: participant.uid,
   });
+
+  // Fire once: only the first-time scan of a new artwork can newly cross the
+  // required count, so this can't double-count on repeat gallery visits.
+  if (isFirstScanForArtwork && progress.isComplete) {
+    await track("game_completed", { eventSlug: event.slug, uid: participant.uid });
+
+    const completedAt = new Date().toISOString();
+
+    await payload.update({
+      collection: "participants",
+      id: participant.id,
+      data: { completedAt },
+    });
+
+    // Find-or-create so a duplicate/retried request can't double-enter someone.
+    const existingRewardEntry = await payload.find({
+      collection: "reward-entries",
+      limit: 1,
+      where: {
+        and: [
+          { participant: { equals: participant.id } },
+          { event: { equals: event.id } },
+        ],
+      },
+    });
+
+    if (existingRewardEntry.totalDocs === 0) {
+      await payload.create({
+        collection: "reward-entries",
+        data: {
+          bonvoyRewardEligible: Boolean(participant.isBonvoyMember),
+          completedAt,
+          event: event.id,
+          isComplete: true,
+          participant: participant.id,
+          prizeDrawEntries: 1,
+          standardRewardEligible: true,
+        },
+      });
+    }
+  }
 
   return NextResponse.json({
     artwork: {

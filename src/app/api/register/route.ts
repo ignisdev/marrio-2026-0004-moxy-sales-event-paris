@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import configPromise from "@payload-config";
 import { nanoid } from "nanoid";
 import { getPayload } from "payload";
+import { track } from "@vercel/analytics/server";
 
 import { registerSchema } from "@/lib/validation";
 
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
         uid: nanoid(10),
       },
     });
+
+    await track("game_registered", { eventSlug });
 
     const response = NextResponse.json(
       {

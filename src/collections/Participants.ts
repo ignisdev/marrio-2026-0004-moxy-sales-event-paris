@@ -6,6 +6,26 @@ export const Participants: CollectionConfig = {
     defaultColumns: ["displayName", "uid", "lastActiveAt", "completedAt"],
     useAsTitle: "displayName",
   },
+  hooks: {
+    // Postgres FKs from scan-events/reward-entries to participants are
+    // ON DELETE SET NULL, but "participant" is a required field on both —
+    // deleting a participant without clearing its dependents first trips the
+    // NOT NULL constraint. Payload doesn't cascade automatically, so do it here.
+    beforeDelete: [
+      async ({ req, id }) => {
+        await req.payload.delete({
+          collection: "scan-events",
+          req,
+          where: { participant: { equals: id } },
+        });
+        await req.payload.delete({
+          collection: "reward-entries",
+          req,
+          where: { participant: { equals: id } },
+        });
+      },
+    ],
+  },
   fields: [
     { name: "uid", type: "text", index: true, required: true, unique: true },
     { name: "event", type: "relationship", relationTo: "events", required: true },
