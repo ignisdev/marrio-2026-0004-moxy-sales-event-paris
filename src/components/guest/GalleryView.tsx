@@ -8,6 +8,7 @@ import { HeadingBox } from "@/components/guest/HeadingBox";
 import { Reveal } from "@/components/guest/Reveal";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Multiline, useCopy } from "@/components/guest/CopyProvider";
+import { useImagesPreloaded } from "@/hooks/useImagesPreloaded";
 import { type Locale } from "@/config/locales";
 import { guestRoutes } from "@/config/routes";
 import { toLines } from "@/lib/copy";
@@ -32,7 +33,11 @@ import type { GalleryProgress } from "@/types/domain";
  */
 const FRAMES = [
   { src: "/images/frame1.webp", ar: 1326 / 1549, pad: "12%" },
-  { src: "/images/frame2.webp", ar: 1309 / 1592, pad: "12%" },
+  // object-cover centers its crop by default, which was trimming the top of
+  // the artwork photo to keep it vertically centred in the window. Anchoring
+  // the crop to the top keeps the full top of the graphic and trims from the
+  // bottom instead.
+  { src: "/images/frame2.webp", ar: 1309 / 1592, objectPosition: "center top", pad: "12%" },
   { src: "/images/frame3.webp", ar: 821 / 946, pad: "13%" },
   { src: "/images/frame4.webp", ar: 818 / 987, pad: "13%" },
   { src: "/images/frame5.webp", ar: 866 / 1123, pad: "13%" },
@@ -93,6 +98,27 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
   );
   const isComplete = required > 0 && collectedCount >= required;
   const ctaDelay = 120 + artworks.length * 90 + 120;
+
+  // Preload every collected artwork's photo before revealing the wall, so
+  // frames never sit empty mid-fetch and then pop in one by one — the whole
+  // gallery appears together once it's actually ready to paint.
+  const collectedImageUrls = useMemo(
+    () =>
+      artworks
+        .filter((artwork) => collectedSet.has(artwork.slug))
+        .map((artwork) => artwork.revealedImageUrl)
+        .filter((url): url is string => Boolean(url)),
+    [artworks, collectedSet],
+  );
+  const imagesPreloaded = useImagesPreloaded(collectedImageUrls);
+  // Once shown, stay shown — a later reconciliation adding newly-collected
+  // slugs shouldn't re-hide a gallery the guest is already looking at.
+  const [galleryRevealed, setGalleryRevealed] = useState(false);
+  useEffect(() => {
+    if (imagesPreloaded && !galleryRevealed) {
+      setGalleryRevealed(true);
+    }
+  }, [imagesPreloaded, galleryRevealed]);
 
   // Completion overlay shows by default whenever the gallery is complete. The
   // "Back to Gallery" button dismisses it for this view; on a fresh visit (the
@@ -157,6 +183,7 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
               alt={artwork.title}
               className="h-full w-full object-cover"
               src={artwork.revealedImageUrl}
+              style={frame.objectPosition ? { objectPosition: frame.objectPosition } : undefined}
             />
           ) : null}
         </div>
@@ -191,6 +218,19 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
 
   return (
     <>
+      {/* Loading takeover — covers the wall until every collected artwork's
+          photo has actually decoded, so nothing pops in as it arrives over
+          the network. Continues the video reveal's black background, then
+          dissolves once the gallery is ready. */}
+      <div
+        aria-hidden={galleryRevealed}
+        className={`fixed inset-0 z-[120] flex items-center justify-center bg-black transition-opacity duration-500 ${
+          galleryRevealed ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+      </div>
+
       {/*
         Full-bleed gallery backdrop. The 908×1480 image keeps its true aspect
         ratio (no squashing) and is scaled to COVER the viewport — the excess
