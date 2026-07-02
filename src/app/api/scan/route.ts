@@ -135,7 +135,11 @@ export async function POST(request: Request) {
   // Fire once: only the first-time scan of a new artwork can newly cross the
   // required count, so this can't double-count on repeat gallery visits.
   if (isFirstScanForArtwork && progress.isComplete) {
-    await track("game_completed", { eventSlug: event.slug, uid: participant.uid });
+    await track(
+      "game_completed",
+      { eventSlug: event.slug, uid: participant.uid },
+      { headers: request.headers },
+    );
 
     const completedAt = new Date().toISOString();
 

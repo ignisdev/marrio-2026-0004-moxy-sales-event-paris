@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await track("game_registered", { eventSlug });
+    await track("game_registered", { eventSlug }, { headers: request.headers });
 
     const response = NextResponse.json(
       {
