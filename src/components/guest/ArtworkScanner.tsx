@@ -11,9 +11,10 @@ import { type Locale } from "@/config/locales";
 import { guestRoutes } from "@/config/routes";
 import {
   addCollectedArtworkSlugs,
+  addPendingScan,
   readParticipantUid,
-  storageKeys,
 } from "@/config/storage";
+import { drainPendingScans } from "@/lib/pendingScans";
 import { Multiline, useCopy } from "@/components/guest/CopyProvider";
 import {
   getDynamicQrSlug,
@@ -154,6 +155,13 @@ export function ArtworkScanner({
   }, []);
 
   useEffect(() => {
+    void drainPendingScans();
+    window.addEventListener("online", drainPendingScans);
+    return () => window.removeEventListener("online", drainPendingScans);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     return () => {
       stopScanning();
     };
@@ -171,21 +179,13 @@ export function ArtworkScanner({
   }
 
   function queuePendingScan(artwork: ScannerArtwork, qrPayload: string) {
-    const pendingScan = {
+    addPendingScan({
       artworkSlug: artwork.slug,
       locale,
       qrPayload,
       scannedAt: new Date().toISOString(),
       uid: getParticipantUid(),
-    };
-    const existing = JSON.parse(
-      window.localStorage.getItem(storageKeys.pendingScans) || "[]",
-    ) as unknown[];
-
-    window.localStorage.setItem(
-      storageKeys.pendingScans,
-      JSON.stringify([...existing, pendingScan]),
-    );
+    });
   }
 
   function redirectToRegister(qrForResume?: string) {

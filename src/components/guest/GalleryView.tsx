@@ -12,6 +12,7 @@ import { useImagesPreloaded } from "@/hooks/useImagesPreloaded";
 import { type Locale } from "@/config/locales";
 import { guestRoutes } from "@/config/routes";
 import { toLines } from "@/lib/copy";
+import { drainPendingScans } from "@/lib/pendingScans";
 import {
   addCollectedArtworkSlugs,
   getCollectedArtworkSlugsServerSnapshot,
@@ -74,17 +75,22 @@ export function GalleryView({ artworks, locale, required }: GalleryViewProps) {
     }
 
     let cancelled = false;
-    void fetch(`/api/progress?uid=${encodeURIComponent(uid)}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((progress: GalleryProgress | null) => {
-        if (cancelled || !progress?.collectedArtworkSlugs) {
-          return;
-        }
-        addCollectedArtworkSlugs(progress.collectedArtworkSlugs);
-      })
-      .catch(() => {
-        // Offline or transient error — keep the local view.
-      });
+    // Retry any scans stranded by a dropped connection before reconciling —
+    // otherwise a guest who's "done" on-device but missing a scan server-side
+    // would never register as complete.
+    void drainPendingScans().then(() =>
+      fetch(`/api/progress?uid=${encodeURIComponent(uid)}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((progress: GalleryProgress | null) => {
+          if (cancelled || !progress?.collectedArtworkSlugs) {
+            return;
+          }
+          addCollectedArtworkSlugs(progress.collectedArtworkSlugs);
+        })
+        .catch(() => {
+          // Offline or transient error — keep the local view.
+        }),
+    );
 
     return () => {
       cancelled = true;
