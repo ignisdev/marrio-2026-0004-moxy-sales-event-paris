@@ -6,13 +6,25 @@ import { type Locale } from "@/config/locales";
 import { guestRoutes } from "@/config/routes";
 import { getServerSessionUid } from "@/lib/session";
 
-export default async function StartPage({ params }: { params: Promise<{ locale: Locale }> }) {
+export default async function StartPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ qr?: string | string[] }>;
+}) {
   const { locale } = await params;
+  const { qr } = await searchParams;
+  const qrValue = Array.isArray(qr) ? qr[0] : qr || null;
 
   // Forward returning, registered visitors straight to the gallery before any
   // HTML renders — no flash of the start screen.
   if (await getServerSessionUid()) {
-    redirect(guestRoutes.gallery(locale));
+    redirect(
+      qrValue
+        ? `${guestRoutes.scanner(locale)}?qr=${encodeURIComponent(qrValue)}`
+        : guestRoutes.gallery(locale),
+    );
   }
 
   return (
@@ -22,7 +34,7 @@ export default async function StartPage({ params }: { params: Promise<{ locale: 
       containerClassName="bg-[url('/images/background.png')] bg-cover bg-top"
       showLogo
     >
-      <LandingExperience locale={locale} />
+      <LandingExperience locale={locale} qrValue={qrValue} />
     </AppShell>
   );
 }

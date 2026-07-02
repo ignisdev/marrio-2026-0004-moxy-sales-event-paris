@@ -15,10 +15,18 @@ import { toLines } from "@/lib/copy";
  * The landing experience: a "Play" intro that swaps to a "How to play" panel
  * (same three-row Moxy header) when Play is tapped, then on to registration.
  */
-export function LandingExperience({ locale }: { locale: Locale }) {
+export function LandingExperience({
+  locale,
+  qrValue,
+}: {
+  locale: Locale;
+  qrValue?: string | null;
+}) {
   const copy = useCopy();
   const [section, setSection] = useState<"play" | "howToPlay">("play");
-  const registerHref = `${guestRoutes.register(locale)}?event=${defaultEventSlug}`;
+  const registerHref = `${guestRoutes.register(locale)}?event=${defaultEventSlug}${
+    qrValue ? `&qr=${encodeURIComponent(qrValue)}` : ""
+  }`;
 
   const howToPlaySteps: ReactNode[] = [
     copy.step1,
